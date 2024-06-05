@@ -38,6 +38,9 @@ environment variables or through a file named
   interfacing with the GitHub API
 * **ORG**: the name of the GitHub organization to query
 * **TEAM_NAME**: the name of the team to synchronize
+* **DRY_RUN**: if "false", it perform the sync; otherwise, just
+  display messages saying what it would do but don't actually
+  perform the sync
 
 ### Scoping the PAT
 
