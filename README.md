@@ -41,6 +41,8 @@ environment variables or through a file named
 * **DRY_RUN**: if "false", it perform the sync; otherwise, just
   display messages saying what it would do but don't actually
   perform the sync
+* **API_URL**: the URL to the API to be queried; update this to
+  support GitHub Enterprise (GHE) installations
 
 ### Scoping the PAT
 

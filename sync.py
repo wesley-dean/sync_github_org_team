@@ -33,6 +33,7 @@ ORG = os.environ["ORG"]
 
 TEAM_NAME = os.environ["TEAM_NAME"]
 DRY_RUN = os.getenv("DRY_RUN", "True")
+API_URL = os.getenv("API_URL", "https://api.github.com")
 
 
 def create_team_if_not_exists(team_name, organization):
@@ -103,7 +104,7 @@ def main():
     logging.debug('Using ORG "%s"', ORG)
     logging.debug('Using TEAM_NAME "%s"', TEAM_NAME)
 
-    github = Github(PAT)
+    github = Github(login_or_token=PAT, base_url=API_URL)
 
     organization = github.get_organization(ORG)
 
