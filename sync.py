@@ -21,8 +21,8 @@ that represents everyone in the organization.  For example:
 import logging
 import os
 
-from github import Github
 from dotenv import load_dotenv
+from github import Github
 
 logging.basicConfig(level=logging.DEBUG)
 
