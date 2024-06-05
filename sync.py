@@ -22,8 +22,18 @@ import logging
 import os
 
 from github import Github
-from github import Auth
 from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.DEBUG)
+
+load_dotenv()
+
+PAT = os.getenv("PAT")
+ORG = os.environ["ORG"]
+
+TEAM_NAME = os.environ["TEAM_NAME"]
+DRY_RUN = os.getenv("DRY_RUN", "True")
+API_URL = os.getenv("API_URL", "https://api.github.com")
 
 
 def create_team_if_not_exists(team_name, organization):
@@ -90,26 +100,15 @@ def main():
     @fn main()
     @brief the main function
     """
+    logging.debug('Using PAT "%s**************************"', PAT[:8])
+    logging.debug('Using ORG "%s"', ORG)
+    logging.debug('Using TEAM_NAME "%s"', TEAM_NAME)
 
-    # logging.basicConfig(level=logging.DEBUG)
+    github = Github(login_or_token=PAT, base_url=API_URL)
 
-    load_dotenv()
+    organization = github.get_organization(ORG)
 
-    pat = os.environ["PAT"]
-    org = os.environ["ORG"]
-    team_name = os.environ["TEAM_NAME"]
-
-    logging.debug('Using PAT "%s**************************"', pat[:8])
-    logging.debug('Using ORG "%s"', org)
-    logging.debug('Using TEAM_NAME "%s"', team_name)
-
-    auth = Auth.Token(pat)
-
-    g = Github(auth=auth)
-
-    organization = g.get_organization(org)
-
-    team = create_team_if_not_exists(team_name, organization)
+    team = create_team_if_not_exists(TEAM_NAME, organization)
 
     current_org_members = get_group_logins(organization)
     current_team_members = get_group_logins(team)
@@ -117,7 +116,8 @@ def main():
     for member in current_org_members:
         if not current_team_members[member]:
             logging.info('"%s" is in the org but not the team, so adding them', member)
-            team.add_membership(member)
+            if not DRY_RUN.lower == "false":
+                team.add_membership(member)
         else:
             logging.debug('"%s" is in the org and in the team', member)
 
