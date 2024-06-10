@@ -28,8 +28,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv()
 
-PAT = os.getenv("PAT")
-ORG = os.environ["ORG"]
+PAT = str(os.getenv("PAT"))
+ORG = str(os.environ["ORG"])
 
 TEAM_NAME = os.environ["TEAM_NAME"]
 DRY_RUN = os.getenv("DRY_RUN", "True")
@@ -100,7 +100,8 @@ def main():
     @fn main()
     @brief the main function
     """
-    logging.debug('Using PAT "%s**************************"', PAT[:8])
+
+    logging.debug('Using PAT "%s**************************"', PAT[1:8])
     logging.debug('Using ORG "%s"', ORG)
     logging.debug('Using TEAM_NAME "%s"', TEAM_NAME)
 

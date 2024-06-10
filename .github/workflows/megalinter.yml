@@ -1,6 +1,4 @@
 ---
-# MegaLinter GitHub Action configuration file
-# More info at https://megalinter.github.io
 name: MegaLinter
 
 # yamllint disable-line rule:truthy
@@ -43,18 +41,12 @@ jobs:
       # MegaLinter
       - name: MegaLinter
         id: ml
-        # You can override MegaLinter flavor used to have faster performances
-        # More info at https://megalinter.github.io/flavors/
         uses: oxsecurity/megalinter/flavors/python@5199c6377b4cb7faff749a1971636f3343db9fe6 # pin@v7.12.0
         env:
-          # All available variables are described in documentation
-          # https://megalinter.github.io/configuration/
           VALIDATE_ALL_CODEBASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
-          # DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
 
-          # Upload MegaLinter artifacts
+      # Upload MegaLinter artifacts
       - name: Archive production artifacts
         if: always()
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin@v3
