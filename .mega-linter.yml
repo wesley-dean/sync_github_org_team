@@ -53,7 +53,3 @@ REPOSITORY_DEVSKIM_ARGUMENTS: "--skip-git-ignored-files"
 BASH_SHFMT_ARGUMENTS: -i 2 -bn -ci -sr -kp
 
 REPOSITORY_TRUFFLEHOG_ARGUMENTS: "--exclude-paths=.trufflehogignore"
-
-PYTHON_PYLINT_PRE_COMMANDS:
-  - command: "pip install -r requirements.txt"
-    venv: pylint
