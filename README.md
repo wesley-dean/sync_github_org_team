@@ -146,7 +146,7 @@ only used for sorting.  Consider the following:
     "allow": [
       "true"
     ],
-    order: 100
+    "order": 100
   }
 }
 ```
