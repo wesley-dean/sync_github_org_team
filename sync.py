@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+import time
 
 from dotenv import load_dotenv
 from github import Github
@@ -37,6 +38,7 @@ TEAM_NAME = os.environ["TEAM_NAME"]
 DRY_RUN = os.getenv("DRY_RUN", "True")
 API_URL = os.getenv("API_URL", "https://api.github.com")
 USER_FILTERS = json.loads(os.getenv("USER_FILTERS", "[]"))
+DELAY = float(os.getenv("DELAY", "3"))
 
 
 def create_team_if_not_exists(team_name, organization):
@@ -94,8 +96,7 @@ def get_group_logins(group):
     for member in group.get_members():
         logging.debug('Found member "%s"', member.login)
 
-        if allow_user(member):
-            member_logins[member.login] = True
+        member_logins[member.login] = True
 
     return member_logins
 
@@ -163,6 +164,7 @@ def allow_user(member):
     @param member the member object to consider
     @retval True accept the user into the team
     @retval False deny the user membership into the team
+    @retval None no finding for this user
     @par Examples
     @code
     for member in organizational_members:
@@ -170,9 +172,9 @@ def allow_user(member):
             print(f"We like {member.login}!")
     @endcode
     """
-    allow_this_user = True
+    allow_this_user = None
 
-    for field in USER_FILTERS:
+    for field in dict(sorted(USER_FILTERS.items(), key=user_filter_order)):
         logging.debug("Examining %s for inclusion", member.login)
 
         if matches_regexes(member, field, "reject"):
@@ -184,6 +186,29 @@ def allow_user(member):
     logging.debug("    filter result: %s", allow_this_user)
 
     return allow_this_user
+
+
+def user_filter_order(item):
+    """
+    @fn user_filter_order()
+    @brief determine the order of USER_FIELDS to process
+    @details
+    The `USER_FIELDS` dictionary may include `order` fields
+    which determine the order in which fields are processed
+    with lower orders processed before higher orders.  This
+    will return the order for fields.  The default `order`
+    is `0`.
+    @param item the dict under `USER_FIELDS` to consider
+    @returns the order value or 0 if undefined
+    @par Examples
+    @code
+    sorted_fields = sorted(MY_FIELDS.items(), key=user_filter_order)
+    @endcode
+    """
+    if "order" in item:
+        return item[1]["order"]
+
+    return 0
 
 
 def matches_regexes(member, field, key):
@@ -254,14 +279,28 @@ def main():
     current_team_members = get_group_logins(team)
 
     for member in current_org_members:
-        if not current_team_members[member]:
-            logging.info('"%s" is in the org but not the team, so adding them', member)
+        member_object = github.get_user(member)
+        if current_team_members[member] and allow_user(member_object) is False:
+            logging.info(
+                "'%s' is in the team but shouldn't be, so removing them", member
+            )
+            if not DRY_RUN.lower == "false":
+                team.remove_membership(member)
+            else:
+                logging.info("dry run so not removing the user")
+        elif not current_team_members[member] and allow_user(member_object) in (
+            None,
+            True,
+        ):
+            logging.info("'%s' is in the org but not the team, so adding them", member)
             if not DRY_RUN.lower == "false":
                 team.add_membership(member)
             else:
                 logging.info("dry run so not adding the user")
         else:
-            logging.debug('"%s" is in the org and in the team', member)
+            logging.debug("No action required for '%s'", member)
+
+        time.sleep(DELAY)
 
 
 if __name__ == "__main__":
