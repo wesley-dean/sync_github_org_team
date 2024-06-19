@@ -68,7 +68,7 @@ DELAY = float(os.getenv("DELAY", "3"))
 ##
 # @var int LOG_LEVEL
 # @brief the threshold for displaying logs; higher is quieter
-LOG_LEVEL = int(os.getenv("LOGGING", "20"))
+LOG_LEVEL = int(os.getenv("LOG_LEVEL", "20"))
 
 logging.basicConfig(level=LOG_LEVEL)
 
@@ -367,7 +367,7 @@ def add_member_to_team(member_object, team_object):
         return None
 
     logging.debug("Not in DRY_RUN, so interacting with GitHub API")
-    return team_object.add_membership(member_name)
+    return team_object.add_membership(member_object)
 
 
 def remove_member_from_team(member_object, team_object):
@@ -431,12 +431,16 @@ def main():
 
         logging.info("%i / %i: %s", member_count, member_total, member)
 
-        if current_team_members[member] and allow_user(member_object) is False:
+        if (
+            member in current_team_members
+            and current_team_members[member]
+            and allow_user(member_object) is False
+        ):
             logging.info(
                 "'%s' is in the team but shouldn't be, so removing them", member
             )
             remove_member_from_team(member_object, team_object)
-        elif not current_team_members[member] and allow_user(member_object) in (
+        elif member not in current_team_members and allow_user(member_object) in (
             None,
             True,
         ):
