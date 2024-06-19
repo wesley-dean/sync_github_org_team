@@ -6,6 +6,11 @@ will query GitHub for the list of members of the
 organization and add them to a team under that
 organization.
 
+* **NOTE**: This tool does not modify organizational membership,
+  nor does it change any settings for any repository.  It
+  only affects the one team that's specified and its
+  membership.
+
 ## Reason for this tool
 
 Access to repositories can be provided to individual
@@ -18,6 +23,14 @@ open-source" or
 resources.  This tool fills in the gap -- the
 missing ability to specify organization-wide
 access -- by creating a team that may be used.
+
+Also, for organizations using GitHub Enterprise Cloud
+(GHEC), there exists
+[native functionality](https://docs.github.com/en/enterprise-cloud@latest/organizations/organizing-members-into-teams/synchronizing-a-team-with-an-identity-provider-group)
+for synchronizing team membership with a supported
+Identity Provider (IdP).  The native functionality
+would likely represent a better approach than using
+this tool.
 
 ## Installing the tool
 
