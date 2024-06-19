@@ -33,12 +33,12 @@ load_dotenv()
 ##
 # @var str PAT
 # @brief Personal Access Token for interacting with GitHub
-PAT = os.getenv("PAT", None)
+PAT = str(os.getenv("PAT", None))
 
 ##
 # @var str ORG
 # @brief name of GitHub organization to query
-ORG = os.getenv("ORG", None)
+ORG = str(os.getenv("ORG", None))
 
 ##
 # @var str TEAM_NAME
