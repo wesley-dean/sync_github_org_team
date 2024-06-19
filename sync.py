@@ -22,23 +22,67 @@ import json
 import logging
 import os
 import re
+import sys
 import time
 
 from dotenv import load_dotenv
 from github import Github
 
-logging.basicConfig(level=logging.DEBUG)
-
 load_dotenv()
 
-PAT = str(os.getenv("PAT"))
-ORG = str(os.environ["ORG"])
+##
+# @var str PAT
+# @brief Personal Access Token for interacting with GitHub
+PAT = os.getenv("PAT", None)
 
-TEAM_NAME = os.environ["TEAM_NAME"]
+##
+# @var str ORG
+# @brief name of GitHub organization to query
+ORG = os.getenv("ORG", None)
+
+##
+# @var str TEAM_NAME
+# @brief the name of the team to process
+TEAM_NAME = os.getenv("TEAM_NAME", None)
+
+##
+# @var str DRY_RUN
+# @brief when False, perform read-write operations; otherwise, read-only
 DRY_RUN = os.getenv("DRY_RUN", "True")
+
+##
+# @var str API_URL
+# @brief the URL to the API; default is GitHub.com's API
 API_URL = os.getenv("API_URL", "https://api.github.com")
+
+##
+# @var str USER_FILTERS
+# @brief a JSON object describing the filters to apply to determine membership
 USER_FILTERS = json.loads(os.getenv("USER_FILTERS", "[]"))
+
+##
+# @var float DELAY
+# @brief the number of seconds to wait between API calls
 DELAY = float(os.getenv("DELAY", "3"))
+
+##
+# @var int LOG_LEVEL
+# @brief the threshold for displaying logs; higher is quieter
+LOG_LEVEL = int(os.getenv("LOGGING", "20"))
+
+logging.basicConfig(level=LOG_LEVEL)
+
+if PAT is None:
+    logging.critical("PAT was undefined")
+    sys.exit(1)
+
+if ORG is None:
+    logging.critical("ORG was undefined")
+    sys.exit(1)
+
+if TEAM_NAME is None:
+    logging.critical("TEAM_NAME was undefined")
+    sys.exit(1)
 
 
 def create_team_if_not_exists(team_name, organization):
@@ -259,6 +303,106 @@ def matches_regexes(member, field, key):
     return False
 
 
+def is_dry_run(value=DRY_RUN):
+    """
+    @fn is_dry_run()
+    @brief determine if we're running in dry run or not
+    @details
+    A "dry run" is one where we don't actually make any
+    changes and it's determined by the global `DRY_RUN`.
+    When `DRY_RUN` is set to `False` or `no`, then we'll
+    return False (perform write operations); when it's
+    set to `True` or `yes, we return `True` (do NOT
+    perform write operations); if it's set to anything else,
+    we return `True` (do NOT perform write operations).
+
+    By default, we return True (don't perform write
+    operations) just to be safe.
+    @param value the value to evaluate (default: DRY_RUN)
+    @retval False perform write operations
+    @retval True don't perform write operations
+    @par Examples
+    @code
+    if is_dry_run():
+        print("We won't do the thing")
+    else:
+        print("We're going to do the thing!!!")
+    @endcode
+    """
+
+    normalized_value = value.lower()
+
+    if normalized_value in ("true", "yes"):
+        return True
+    if normalized_value in ("false", "no"):
+        return False
+
+    return True
+
+
+def add_member_to_team(member_object, team_object):
+    """
+    @fn add_member_to_team()
+    @brief add a member to a team
+    @details
+    This will add a member object to a team object
+    @param member_object the object that represents the user
+    @param team_object the object that represents the team
+    @retval True if the addition was successful
+    @retval False if the addition failed
+    @retval None otherwise (e.g., dry run)
+    @par Examples
+    @code
+    add_member_to_team(wes_object, awesome_people_team_object)
+    @endcode
+    """
+
+    team_name = team_object.name
+    member_name = member_object.login
+
+    logging.info("Received member '%s' to add to team '%s'", member_name, team_name)
+
+    if is_dry_run():
+        logging.debug("In DRY_RUN, so not interacting with GitHub API")
+        return None
+
+    logging.debug("Not in DRY_RUN, so interacting with GitHub API")
+    return team_object.add_membership(member_name)
+
+
+def remove_member_from_team(member_object, team_object):
+    """
+    @fn remove_member_from_team()
+    @brief remove a member from a team
+    @details
+    This will remove a member object from a team object.  It's the
+    opposite of add_member_to_team().
+    @param member_object the object that represents the user
+    @param team_object the object that represents the team
+    @retval True if the removal was successful
+    @retval False if the removal failed
+    @retval None otherwise (e.g., dry run)
+    @par Examples
+    @code
+    remove_member_from_team(bad_guy_object, winners_team_object)
+    @endcode
+    """
+
+    team_name = team_object.name
+    member_name = member_object.login
+
+    logging.info(
+        "Received member '%s' to remove from team '%s'", member_name, team_name
+    )
+
+    if is_dry_run():
+        logging.debug("In DRY_RUN, so not interacting with GitHub API")
+        return None
+
+    logging.debug("Not in DRY_RUN, so interacting with GitHub API")
+    return team_object.remove_member(member_name)
+
+
 def main():
     """
     @fn main()
@@ -271,36 +415,38 @@ def main():
 
     github = Github(login_or_token=PAT, base_url=API_URL)
 
-    organization = github.get_organization(ORG)
+    organization_object = github.get_organization(ORG)
 
-    team = create_team_if_not_exists(TEAM_NAME, organization)
+    team_object = create_team_if_not_exists(TEAM_NAME, organization_object)
 
-    current_org_members = get_group_logins(organization)
-    current_team_members = get_group_logins(team)
+    current_org_members = get_group_logins(organization_object)
+    current_team_members = get_group_logins(team_object)
+
+    member_count = 0
+    member_total = len(current_org_members)
 
     for member in current_org_members:
         member_object = github.get_user(member)
+        member_count += 1
+
+        logging.info("%i / %i: %s", member_count, member_total, member)
+
         if current_team_members[member] and allow_user(member_object) is False:
             logging.info(
                 "'%s' is in the team but shouldn't be, so removing them", member
             )
-            if not DRY_RUN.lower == "false":
-                team.remove_membership(member)
-            else:
-                logging.info("dry run so not removing the user")
+            remove_member_from_team(member_object, team_object)
         elif not current_team_members[member] and allow_user(member_object) in (
             None,
             True,
         ):
             logging.info("'%s' is in the org but not the team, so adding them", member)
-            if not DRY_RUN.lower == "false":
-                team.add_membership(member)
-            else:
-                logging.info("dry run so not adding the user")
+            add_member_to_team(member_object, team_object)
         else:
-            logging.debug("No action required for '%s'", member)
+            logging.info("No action required for '%s'", member)
 
-        time.sleep(DELAY)
+        if member_count != member_total:
+            time.sleep(DELAY)
 
 
 if __name__ == "__main__":

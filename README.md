@@ -49,6 +49,8 @@ environment variables or through a file named
 * **API_URL**: the URL to the API to be queried; update this to
   support GitHub Enterprise (GHE) installations
 * **DELAY**: the number of seconds to delay between each user operation
+* **LOG_LEVEL**: the threshold for displaying log messages
+  10 = Debug, 20 = Info (default), 30 = Warning, 40 = Error, 50 = Critcal
 * **USER_FILTERS**: a JSON object that allows for the filtering of
   users who may be members of the team.
 
