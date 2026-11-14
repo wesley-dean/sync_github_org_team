@@ -208,3 +208,22 @@ The tool can be run via a cronjob, GitHub Action,
 Jenkins pipeline, etc..  The only requirement is
 that the enviornment should have access to the Internet
 to interact with the GitHub API.
+
+## Running unit tests
+
+The unit tests use Python's standard-library `unittest` and mock the GitHub
+client, organization, team, and member objects. They do not contact GitHub,
+require a personal access token, or modify a real team. The test loader also
+stubs optional third-party imports, so no external Python dependencies are
+required to execute the suite.
+
+Run from the repository root:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+GitHub Actions runs the same suite in the `test-unit` job on pull requests
+and pushes to `main`. Tests exercise current behavior; known issues with
+team creation in dry-run mode, configuration validation, and filter ordering
+are outside the scope of this initial test-only change.
