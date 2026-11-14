@@ -1,2 +1,8 @@
 PyGithub >= 1.55
 python-dotenv >= 0.20.0
+
+# Security floors for transitive dependencies (Trivy and OSV, Nov 2026).
+PyJWT[crypto] >= 2.15.1
+urllib3 >= 2.8.0
+# Compromised emSign trust anchor; see GHSA-6q48-6c7w-9gw2.
+certifi >= 2026.10.19
