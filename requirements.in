@@ -1,5 +1,5 @@
-PyGithub >= 1.55
-python-dotenv >= 0.20.0
+PyGithub >= 2.10.0
+python-dotenv >= 1.2.4
 
 # Security floors for transitive dependencies (Trivy and OSV, Nov 2026).
 PyJWT[crypto] >= 2.15.1
